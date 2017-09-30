@@ -1,28 +1,42 @@
-import javax.security.auth.login.LoginException;
+import sx.blah.discord.api.ClientBuilder;
+import sx.blah.discord.api.IDiscordClient;
+import sx.blah.discord.api.events.EventSubscriber;
+import sx.blah.discord.handle.obj.IChannel;
+import sx.blah.discord.util.DiscordException;
+import sx.blah.discord.util.RequestBuffer;
 
-import net.dv8tion.jda.core.*;
-import net.dv8tion.jda.core.events.Event;
-import net.dv8tion.jda.core.events.ReadyEvent;
-import net.dv8tion.jda.core.events.guild.voice.GuildVoiceJoinEvent;
-import net.dv8tion.jda.core.exceptions.RateLimitedException;
-import net.dv8tion.jda.core.hooks.EventListener;
+public class Discord{
+	 @EventSubscriber
 
-public class Discord implements EventListener{
-	JDA jda;
-	Discord(String token) throws LoginException, IllegalArgumentException, InterruptedException, RateLimitedException{
-		jda = new JDABuilder(AccountType.BOT)
-				.setToken(token)
-	            .addEventListener(this)
-	            .buildBlocking();
+	 static IDiscordClient getBuiltDiscordClient(String token){
+
+	        // The ClientBuilder object is where you will attach your params for configuring the instance of your bot.
+	        // Such as withToken, setDaemon etc
+	        return new ClientBuilder()
+	                .withToken(token)
+	                .build();
+	 }
+
+	public static void sendMessage(IChannel channel, String message) {
+		RequestBuffer.request(() -> {
+            try{
+                channel.sendMessage(message);
+            } catch (DiscordException e){
+                System.err.println("Message could not be sent with error: ");
+                e.printStackTrace();
+            }
+        });
 	}
-	@Override
-	public void onEvent(Event e) {
-		// TODO Auto-generated method stub
-		if (e instanceof ReadyEvent)
-            System.out.println("API is ready!");
-		if (e instanceof GuildVoiceJoinEvent){
-			System.out.println("Joined!");
-			//getChannelJoined
-		}
+/*
+	public void joinChannel(IDiscordClient client){
+		IVoiceChannel userVoiceChannel = .getAuthor().getVoiceStateForGuild(event.getGuild()).getChannel();
+
+        if(userVoiceChannel == null)
+            return;
+
+        userVoiceChannel.join();
 	}
+	*/
 }
+
+
