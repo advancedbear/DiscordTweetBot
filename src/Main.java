@@ -60,9 +60,6 @@ public class Main extends JFrame implements ActionListener{
 		});
 	}
 
-	/**
-	 * Create the frame.
-	 */
 	public Main() {
 		setTitle("Discord Tweet Bot");
 		setResizable(false);
@@ -117,12 +114,8 @@ public class Main extends JFrame implements ActionListener{
 		btnLaunchBot.addActionListener(this);
 		btnLaunchBot.setActionCommand("Launch");
 
-		try {
-			loadConfigFile();
-		} catch (UnknownHostException e) {
-			JOptionPane.showMessageDialog(this, "Discordサーバーに問題があります。\n時間を置いて再度実行してください。");
-			System.exit(-1);
-		}
+		loadConfigFile();
+
 	}
 
 	@Override
@@ -212,7 +205,7 @@ public class Main extends JFrame implements ActionListener{
 
 	}
 
-	public void loadConfigFile() throws UnknownHostException {
+	public void loadConfigFile() {
 		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f))) {
 			config = (Config) ois.readObject();
 			// 1. Twitter Login.
@@ -229,6 +222,9 @@ public class Main extends JFrame implements ActionListener{
 			chkNotifyVC.setSelected(config.getNotifyVC());
 			chkNotifyGame.setSelected(config.getNotifyGame());
 			chkNotifyInvite.setSelected(config.getNotifyInvite());
+		} catch(UnknownHostException e){
+			JOptionPane.showMessageDialog(this, "Discordサーバーに問題があります。\n時間を置いて再度実行してください。");
+			System.exit(-1);
 		} catch (IOException | ClassNotFoundException | IllegalStateException | TwitterException e) {
 			e.printStackTrace();
 			JOptionPane.showMessageDialog(this, "Thank you for using. Please read about how to use at first.");
