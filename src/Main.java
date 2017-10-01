@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.URI;
+import java.net.UnknownHostException;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -35,10 +36,10 @@ public class Main extends JFrame implements ActionListener{
 
 	JButton btnLaunchBot = new JButton("Launch Bot");
 
-	Tweet twitter = new Tweet();
-	Discord discord;
-	IDiscordClient client;
-	Config config = new Config();
+	static Tweet twitter = new Tweet();
+	static Discord discord;
+	static IDiscordClient client;
+	static Config config = new Config();
 
 	File f = new File("config.cfg");
 
@@ -116,7 +117,12 @@ public class Main extends JFrame implements ActionListener{
 		btnLaunchBot.addActionListener(this);
 		btnLaunchBot.setActionCommand("Launch");
 
-		loadConfigFile();
+		try {
+			loadConfigFile();
+		} catch (UnknownHostException e) {
+			JOptionPane.showMessageDialog(this, "Discordサーバーに問題があります。\n時間を置いて再度実行してください。");
+			System.exit(-1);
+		}
 	}
 
 	@Override
@@ -206,26 +212,26 @@ public class Main extends JFrame implements ActionListener{
 
 	}
 
-	public void loadConfigFile(){
+	public void loadConfigFile() throws UnknownHostException {
 		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f))) {
-            config = (Config) ois.readObject();
-            // 1. Twitter Login.
-            twitter.authorization(config.getAccessToken());
-            btnLoginTwitter.setText("Logged in as @" + twitter.twitter.getScreenName());
+			config = (Config) ois.readObject();
+			// 1. Twitter Login.
+			twitter.authorization(config.getAccessToken());
+			btnLoginTwitter.setText("Logged in as @" + twitter.twitter.getScreenName());
 			btnLoginTwitter.setEnabled(false);
-            // 2. Discord Login.
+			// 2. Discord Login.
 			discord = new Discord();
 			client = Discord.getBuiltDiscordClient(config.getDiscordToken());
 			client.getDispatcher().registerListener(new Events());
 			btnOpenDiscord.setText("Logged in as " + client.getApplicationName());
 			btnOpenDiscord.setEnabled(false);
 			// 3. Set options.
-            chkNotifyVC.setSelected(config.getNotifyVC());
-            chkNotifyGame.setSelected(config.getNotifyGame());
-            chkNotifyInvite.setSelected(config.getNotifyInvite());
-        } catch (IOException | ClassNotFoundException | IllegalStateException | TwitterException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Thank you for using. Please read about how to use at first.");
+			chkNotifyVC.setSelected(config.getNotifyVC());
+			chkNotifyGame.setSelected(config.getNotifyGame());
+			chkNotifyInvite.setSelected(config.getNotifyInvite());
+		} catch (IOException | ClassNotFoundException | IllegalStateException | TwitterException e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(this, "Thank you for using. Please read about how to use at first.");
 			Desktop desktop = Desktop.getDesktop();
 			URI uri;
 			try {
@@ -234,14 +240,14 @@ public class Main extends JFrame implements ActionListener{
 			} catch (Exception error) {
 				error.printStackTrace();
 			}
-        }
+		}
 	}
 
-	public void storeConfigFile(){
+	public void storeConfigFile() {
 		try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(f))) {
-            oos.writeObject(config);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+			oos.writeObject(config);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }
