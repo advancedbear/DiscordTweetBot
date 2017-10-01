@@ -1,15 +1,17 @@
-import twitter4j.*;
-import twitter4j.auth.AccessToken;
-import twitter4j.auth.RequestToken;
-
 import java.awt.Desktop;
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import twitter4j.StatusUpdate;
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
+import twitter4j.TwitterFactory;
+import twitter4j.auth.AccessToken;
+import twitter4j.auth.RequestToken;
+
 public class Tweet {
-	Twitter twitter;
+	static Twitter twitter;
 	AccessToken accessToken = null;
 	RequestToken requestToken;
 
@@ -24,12 +26,8 @@ public class Tweet {
 			requestToken = twitter.getOAuthRequestToken();
 			URI uri = new URI(requestToken.getAuthorizationURL());
 			desktop.browse(uri);
-		} catch (TwitterException e) {
-			System.out.println("Error");
-		} catch (URISyntaxException e) {
-			System.out.println("Error");
-		} catch (IOException e) {
-			System.out.println("Error");
+		} catch (TwitterException | URISyntaxException | IOException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -45,16 +43,16 @@ public class Tweet {
 	public void authorization(AccessToken token) {
 		twitter.setOAuthAccessToken(token);
 	}
-	
-	public void tweet(String t, File f){
+
+	public static void tweet(String t){
 			try {
-				twitter.updateStatus(new StatusUpdate(t).media(f));
+				twitter.updateStatus(new StatusUpdate(t));
 			} catch (TwitterException e) {
 				e.printStackTrace();
 				if (e.getStatusCode() == 403) {
-					System.out.println("140�����𒴂��Ă��܂��B");
+					System.out.println("Over 140 characters.");
 				} else if (e.getStatusCode() == 400) {
-					System.out.println("�^�O�`�����s���ł��B");
+					System.out.println("Something is wrong.");
 				}
 			}
 	}

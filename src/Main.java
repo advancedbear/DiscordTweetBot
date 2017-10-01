@@ -2,6 +2,12 @@ import java.awt.Desktop;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.URI;
 
 import javax.swing.ImageIcon;
@@ -32,9 +38,12 @@ public class Main extends JFrame implements ActionListener{
 	Tweet twitter = new Tweet();
 	Discord discord;
 	IDiscordClient client;
-	/**
-	 * Launch the application.
-	 */
+	Config config = new Config();
+
+	File f = new File("config.cfg");
+
+	private boolean botLaunch = false;
+
 	public static void main(String[] args) {
 		System.setProperty("sun.java2d.noddraw", "true");
 	    System.setProperty("swing.defaultlaf", "com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
@@ -83,23 +92,31 @@ public class Main extends JFrame implements ActionListener{
 		btnOpenDiscord.setBounds(12, 87, 290, 21);
 		contentPane.add(btnOpenDiscord);
 
-		chkNotifyVC.setBounds(8, 137, 294, 21);
-		contentPane.add(chkNotifyVC);
-
-		chkNotifyGame.setBounds(8, 160, 294, 21);
-		contentPane.add(chkNotifyGame);
-
 		JLabel lblSelectFew = new JLabel("3. Choose options for notification.");
 		lblSelectFew.setBounds(12, 118, 290, 13);
 		contentPane.add(lblSelectFew);
 
+		chkNotifyVC.setBounds(8, 137, 294, 21);
+		contentPane.add(chkNotifyVC);
+		chkNotifyVC.addActionListener(this);
+		chkNotifyVC.setActionCommand("chkNotifyVC");
+
+		chkNotifyGame.setBounds(8, 160, 294, 21);
+		contentPane.add(chkNotifyGame);
+		chkNotifyGame.addActionListener(this);
+		chkNotifyGame.setActionCommand("chkNotifyGame");
+
 		chkNotifyInvite.setBounds(8, 183, 294, 21);
 		contentPane.add(chkNotifyInvite);
+		chkNotifyInvite.addActionListener(this);
+		chkNotifyInvite.setActionCommand("chkNotifyInvite");
 
 		btnLaunchBot.setBounds(12, 210, 290, 42);
 		contentPane.add(btnLaunchBot);
 		btnLaunchBot.addActionListener(this);
 		btnLaunchBot.setActionCommand("Launch");
+
+		loadConfigFile();
 	}
 
 	@Override
@@ -107,15 +124,18 @@ public class Main extends JFrame implements ActionListener{
 		if(e.getActionCommand().equals("Twitter")){
 			twitter.TwitterAuth();
 			String value = JOptionPane.showInputDialog(this, "Input PIN number here.");
-			if (value == null) {
-			} else {
+			if (value != null) {
 				twitter.authorization(value);
 				try {
 					btnLoginTwitter.setText("Logged in as @" + twitter.twitter.getScreenName());
 					btnLoginTwitter.setEnabled(false);
+					config.setAccessToken(twitter.accessToken);
 				} catch (TwitterException e1) {
 					e1.printStackTrace();
 				}
+			} else {
+				JOptionPane.showMessageDialog(this, "PIN number was empty. Please restart application. ");
+				System.exit(-1);
 			}
 		}
 
@@ -128,30 +148,100 @@ public class Main extends JFrame implements ActionListener{
 			} catch (Exception error) {
 				error.printStackTrace();
 			}
+			String clientID = JOptionPane.showInputDialog(this, "Input ClientID here.");
 			String token = JOptionPane.showInputDialog(this, "Input Token here.");
-			if(token != null){
+			if(token != null && clientID != null){
 				discord = new Discord();
 				client = Discord.getBuiltDiscordClient(token);
 				client.getDispatcher().registerListener(new Events());
 				System.out.println("Logged in as " + client.getApplicationName());
 				btnOpenDiscord.setText("Logged in as " + client.getApplicationName());
 				btnOpenDiscord.setEnabled(false);
+				config.setDiscordToken(token);
+				config.setDiscordClientID(clientID);
+			} else {
+				JOptionPane.showMessageDialog(this, "Please input ClientID and Token.");
 			}
 		}
 
 		if(e.getActionCommand().equals("Launch")){
+			if(!botLaunch) {
+				if(config.isFirst()){
+					Desktop desktop = Desktop.getDesktop();
+					URI uri;
+					JOptionPane.showMessageDialog(this, "Select the server you want bot to join.\nIf bot was already joined the server, close the browser.");
+					try {
+						uri = new URI("https://discordapp.com/oauth2/authorize?&client_id="+config.getDiscordClientID()+"&scope=bot&permissions=0");
+						desktop.browse(uri);
+					} catch (Exception error) {
+						error.printStackTrace();
+					}
+				}
+				client.login();
+				botLaunch = true;
+				btnLaunchBot.setText("Shutdown Bot");
+				config.setFirstLaunch(false);
+			} else {
+				client.logout();
+				botLaunch = false;
+				btnLaunchBot.setText("Launch Bot");
+			}
+			storeConfigFile();
+		}
+
+		if(e.getActionCommand().equals("chkNotifyVC")){
+			config.setNotifyVC(chkNotifyVC.isSelected());
+			storeConfigFile();
+		}
+
+		if(e.getActionCommand().equals("chkNotifyGame")){
+			config.setNotifyGame(chkNotifyGame.isSelected());
+			storeConfigFile();
+		}
+
+		if(e.getActionCommand().equals("chkNotifyInvite")){
+			config.setNotifyInvite(chkNotifyInvite.isSelected());
+			storeConfigFile();
+		}
+
+	}
+
+	public void loadConfigFile(){
+		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f))) {
+            config = (Config) ois.readObject();
+            // 1. Twitter Login.
+            twitter.authorization(config.getAccessToken());
+            btnLoginTwitter.setText("Logged in as @" + twitter.twitter.getScreenName());
+			btnLoginTwitter.setEnabled(false);
+            // 2. Discord Login.
+			discord = new Discord();
+			client = Discord.getBuiltDiscordClient(config.getDiscordToken());
+			client.getDispatcher().registerListener(new Events());
+			btnOpenDiscord.setText("Logged in as " + client.getApplicationName());
+			btnOpenDiscord.setEnabled(false);
+			// 3. Set options.
+            chkNotifyVC.setSelected(config.getNotifyVC());
+            chkNotifyGame.setSelected(config.getNotifyGame());
+            chkNotifyInvite.setSelected(config.getNotifyInvite());
+        } catch (IOException | ClassNotFoundException | IllegalStateException | TwitterException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Thank you for using. Please read about how to use at first.");
 			Desktop desktop = Desktop.getDesktop();
 			URI uri;
-			JOptionPane.showMessageDialog(this, "Select the server you want bot to join.\nIf you already joined the server, close the browser.");
 			try {
-				uri = new URI("https://discordapp.com/oauth2/authorize?&client_id=361147580698066955&scope=bot&permissions=0");
+				uri = new URI("https://github.com/advancedbear/DiscordTweetBot/blob/master/README.md");
 				desktop.browse(uri);
 			} catch (Exception error) {
 				error.printStackTrace();
 			}
+        }
+	}
 
-			client.login();
-		}
-
+	public void storeConfigFile(){
+		try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(f))) {
+            oos.writeObject(config);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 	}
 }
