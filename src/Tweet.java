@@ -44,9 +44,10 @@ public class Tweet {
 		twitter.setOAuthAccessToken(token);
 	}
 
-	public static void tweet(String t){
+	public static String tweet(String t){
 			try {
-				twitter.updateStatus(new StatusUpdate(t));
+				long id = twitter.updateStatus(new StatusUpdate(t)).getId();
+				return "https://twitter.com/user/status/"+id;
 			} catch (TwitterException e) {
 				e.printStackTrace();
 				if (e.getStatusCode() == 403) {
@@ -54,6 +55,7 @@ public class Tweet {
 				} else if (e.getStatusCode() == 400) {
 					System.out.println("Something is wrong.");
 				}
+				return "Tweet failed";
 			}
 	}
 }

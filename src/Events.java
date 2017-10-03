@@ -18,15 +18,70 @@ public class Events {
     public void onMessageReceived(MessageReceivedEvent event){
 		if(Main.config.getNotifyInvite()){
 			date = new Date();
+			String tMessage = event.getAuthor().getDisplayName(event.getGuild())+ "さんが";
 	        if(event.getMessage().getContent().startsWith("invite")){
 	        	if(event.getAuthor().getPresence().getPlayingText().isPresent()){
-	        		Tweet.tweet(event.getAuthor().getDisplayName(event.getGuild())+ "さんが"+ event.getAuthor().getPresence().getPlayingText().get() + "への参加者を募集しています。 ("+ date_time.format(date) +")");
-	        		Discord.sendMessage(event.getChannel(), "Invite message was tweeted.");
+	        		tMessage += event.getAuthor().getPresence().getPlayingText().get() + "への参加者を募集しています。 ";
 	        	} else {
-	        		Tweet.tweet(event.getAuthor().getDisplayName(event.getGuild())+ "さんが"+ event.getGuild().getName() + "サーバーへの参加者を募集しています。 ("+ date_time.format(date) +")");
-	        		Discord.sendMessage(event.getChannel(), "Invite message was tweeted.");
+	        		tMessage += event.getGuild().getName() + "サーバーへの参加者を募集しています。 ";
 	        	}
+	        	tMessage += "\n("+ date_time.format(date) +")";
+	        	String url = Tweet.tweet(tMessage);
+        		Discord.sendMessage(event.getChannel(), url);
 	        }
+		}
+		if(event.getMessage().getContent().equals("help")){
+        	String help = "---- Discord Twitter Bot----\n"
+        			+ "  version 0.1.1\n"
+        			+ "\n"
+        			+ "List of Commands\n"
+        			+ "  help\n"
+        			+ "  　このヘルプを表示します。\n"
+        			+ "  status"
+        			+ "  　通知機能のオン/オフ状態を表示します\n"
+        			+ "  invite [@n]\n"
+        			+ "  　参加者の募集メッセージをツイートします。\n"
+        			+ "  　ゲームをプレイ中の場合、ツイート文にゲーム名が含まれます。\n"
+        			+ "  start [invite|channel|game]\n"
+        			+ "  　参加者募集、ボイスチャンネル入退室、ゲーム開始、それぞれの\n"
+        			+ "  　通知機能をオンにします。\n"
+        			+ "  stop [invite|channel|game]\n"
+        			+ "  　参加者募集、ボイスチャンネル入退室、ゲーム開始、それぞれの\n"
+        			+ "  　通知機能をオフにします。\n";
+        	Discord.sendMessage(event.getChannel(), help);
+        }
+		if(event.getMessage().getContent().startsWith("start")){
+			try {
+				String subCom = event.getMessage().getContent().substring(6);
+				if(subCom.equals("invite")) Main.config.setNotifyInvite(true);
+				else if(subCom.equals("channel")) Main.config.setNotifyVC(true);
+				else if(subCom.equals("game")) Main.config.setNotifyGame(true);
+				else return;
+				Discord.sendMessage(event.getChannel(), "Notifycation of "+subCom+" is changed into \"ON\".");
+			} catch (StringIndexOutOfBoundsException e){
+				Discord.sendMessage(event.getChannel(), "!! Invalid Command !!");
+			}
+		}
+		if(event.getMessage().getContent().startsWith("stop")){
+			try {
+				String subCom = event.getMessage().getContent().substring(5);
+				if(subCom.equals("invite")) Main.config.setNotifyInvite(false);
+				else if(subCom.equals("channel")) Main.config.setNotifyVC(false);
+				else if(subCom.equals("game")) Main.config.setNotifyGame(false);
+				else return;
+				Discord.sendMessage(event.getChannel(), "Notifycation of "+subCom+" is changed into \"OFF\".");
+			} catch (StringIndexOutOfBoundsException e){
+				Discord.sendMessage(event.getChannel(), "!! Invalid Command !!");
+			}
+		}
+		
+		if(event.getMessage().getContent().startsWith("status")){
+			String status = "!!--------Notification Status--------!!\n"
+					+ "> Invitation Notification -> " +Main.config.getNotifyInvite() +"\n"
+					+ "> VC join/exit Notification -> " +Main.config.getNotifyVC() +"\n"
+					+ "> Game Start Notification -> " +Main.config.getNotifyGame() +"\n"
+					+ "!!-------------------------------------!!";
+			Discord.sendMessage(event.getChannel(), status);
 		}
     }
 

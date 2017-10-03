@@ -13,7 +13,7 @@ public class Config implements Serializable{
 	private boolean notifyInvite;
 
 	private boolean firstLaunch = true;
-
+	
 	public void setAccessToken(AccessToken a){
 		accessToken = a;
 	}

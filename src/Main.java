@@ -52,7 +52,14 @@ public class Main extends JFrame implements ActionListener{
 			public void run() {
 				try {
 					Main frame = new Main();
-					frame.setVisible(true);
+					if(args.length > 0){
+						if(args[0].equals("cui")){
+							frame.setVisible(false);
+							client.login();
+						}
+					} else {
+						frame.setVisible(true);
+					}
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
