@@ -154,8 +154,8 @@ public class Main extends JFrame implements ActionListener{
 			} catch (Exception error) {
 				error.printStackTrace();
 			}
-			String clientID = JOptionPane.showInputDialog(this, "Input ClientID here.");
-			String token = JOptionPane.showInputDialog(this, "Input Token here.");
+			String clientID = JOptionPane.showInputDialog(this, "Input ClientID here.").trim();
+			String token = JOptionPane.showInputDialog(this, "Input Token here.").trim();
 			if(token != null && clientID != null){
 				discord = new Discord();
 				client = Discord.getBuiltDiscordClient(token);

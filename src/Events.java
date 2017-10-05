@@ -32,14 +32,14 @@ public class Events {
 		}
 		if(event.getMessage().getContent().equals("help")){
         	String help = "---- Discord Twitter Bot----\n"
-        			+ "  version 0.1.1\n"
+        			+ "  version 0.1.2\n"
         			+ "\n"
         			+ "List of Commands\n"
         			+ "  help\n"
         			+ "  　このヘルプを表示します。\n"
-        			+ "  status"
+        			+ "  status\n"
         			+ "  　通知機能のオン/オフ状態を表示します\n"
-        			+ "  invite [@n]\n"
+        			+ "  invite\n"
         			+ "  　参加者の募集メッセージをツイートします。\n"
         			+ "  　ゲームをプレイ中の場合、ツイート文にゲーム名が含まれます。\n"
         			+ "  start [invite|channel|game]\n"
@@ -47,7 +47,9 @@ public class Events {
         			+ "  　通知機能をオンにします。\n"
         			+ "  stop [invite|channel|game]\n"
         			+ "  　参加者募集、ボイスチャンネル入退室、ゲーム開始、それぞれの\n"
-        			+ "  　通知機能をオフにします。\n";
+        			+ "  　通知機能をオフにします。\n"
+        			+ "  shutdown-bot\n"
+        			+ "  　ボットを終了します。BOT管理者のみ実行可能です。\n";
         	Discord.sendMessage(event.getChannel(), help);
         }
 		if(event.getMessage().getContent().startsWith("start")){
@@ -82,6 +84,21 @@ public class Events {
 					+ "> Game Start Notification -> " +Main.config.getNotifyGame() +"\n"
 					+ "!!-------------------------------------!!";
 			Discord.sendMessage(event.getChannel(), status);
+		}
+		
+		if(event.getMessage().getContent().startsWith("shutdown-bot")){
+			if(event.getAuthor().getLongID() == event.getClient().getApplicationOwner().getLongID()){
+				String status = "The BOT is now shutting down.\n"
+						+ "Check that "+event.getClient().getOurUser().getName()+" is now OFFLINE.";
+				Discord.sendMessage(event.getChannel(), status);
+				try {
+					Thread.sleep(2000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				Main.client.logout();
+				System.exit(1);
+			}
 		}
     }
 
